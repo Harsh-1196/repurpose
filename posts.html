@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Substack Posts - Content Repurpose</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="top">
+            <div class="logo"><p>Content Repurpose</p></div>
+            <div class="header-content">
+                <nav>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Services</a></li>
+                        <li><a href="posts.html">Substack Posts</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+    
+    <section class="substack-feed">
+        <div class="container">
+            <h2>Latest Posts from Substack</h2>
+            <!-- Substack Feed Embed -->
+            <div id="substack-feed-embed"></div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Content Repurpose. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript to fetch Substack posts based on input URL -->
+    <script>
+        function getQueryParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        const substackUrl = getQueryParameter('substack');
+        if (substackUrl) {
+            let substackUrlWithoutHttps = substackUrl.replace(/^https?:\/\//, ''); // Remove https://
+            if (substackUrlWithoutHttps.endsWith('/')) { // Remove trailing slash if present
+                substackUrlWithoutHttps = substackUrlWithoutHttps.slice(0, -1);
+            }
+            window.SubstackFeedWidget = {
+                substackUrl: substackUrlWithoutHttps,  // Use the provided Substack URL
+                posts: 5
+            };
+            const script = document.createElement('script');
+            script.src = 'https://substackapi.com/embeds/feed.js';
+            script.async = true;
+            document.body.appendChild(script);
+        } else {
+            document.getElementById('substack-feed-embed').innerText = 'No Substack URL provided.';
+        }
+
+        // Function to copy post URL to clipboard
+        function copyPostUrl(postUrl) {
+            navigator.clipboard.writeText(postUrl)
+                .then(function() {
+                    console.log('Post URL copied to clipboard:', postUrl);
+                    alert('Post URL copied to clipboard!');
+                })
+                .catch(function(error) {
+                    console.error('Unable to copy post URL to clipboard:', error);
+                    alert('Error copying post URL to clipboard.');
+                });
+        }
+
+        // Wait for the Substack feed to load
+        document.addEventListener('DOMContentLoaded', function() {
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.addedNodes.length) {
+                        const posts = document.querySelectorAll('#substack-feed-embed .substack-post');
+                        posts.forEach(post => {
+                            const postLink = post.querySelector('a');
+                            if (postLink) {
+                                const postUrl = postLink.href;
+                                const button = document.createElement('button');
+                                button.innerText = 'Copy URL';
+                                button.classList.add('copy-url-button');
+                                button.addEventListener('click', function(event) {
+                                    event.preventDefault();
+                                    copyPostUrl(postUrl);
+                                });
+                                post.appendChild(button);
+                            }
+                        });
+                        observer.disconnect(); // Stop observing after initial load
+                    }
+                });
+            });
+
+            const config = { childList: true, subtree: true };
+            const target = document.getElementById('substack-feed-embed');
+            observer.observe(target, config);
+        });
+    </script>
+</body>
+</html>
